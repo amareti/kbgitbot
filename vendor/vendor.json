@@ -3,7 +3,7 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "WLOsU2aYX/6fs/c3q6EFSWK6H5U=",
+			"checksumSHA1": "iMpzfZsqUU+t5lh5hbIKFci+3j0=",
 			"path": "github.com/keybase/go-keybase-chat-bot/kbchat",
 			"revision": "9da5f477e9eaebaabba92ed07b1df39272652248",
 			"revisionTime": "2017-01-22T05:05:55Z"

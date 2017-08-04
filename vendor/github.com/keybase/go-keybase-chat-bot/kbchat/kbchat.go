@@ -147,8 +147,12 @@ func (a *API) SendMessageByTlfName(tlfName string, body string) error {
 	return nil
 }
 
-func (a *API) SendMessageByTeamName(teamName string, body string) error {
-	send := fmt.Sprintf(`{"method": "send", "params": {"options": {"channel": { "members_type": "team", "name": "%s"}, "message": {"body": "%s"}}}}`, teamName, body)
+func (a *API) SendMessageByTeamName(teamName string, body string, inChannel *string) error {
+	channel := "general"
+	if inChannel != nil {
+		channel = *inChannel
+	}
+	send := fmt.Sprintf(`{"method": "send", "params": {"options": {"channel": { "members_type": "team", "name": "%s", "topic_name": "%s"}, "message": {"body": "%s"}}}}`, teamName, channel, body)
 	if _, err := io.WriteString(a.input, send); err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ func main() {
 type Options struct {
 	KeybaseLocation string
 	ListenPort      int
+	Channel         string
 }
 
 type BotServer struct {
@@ -40,7 +41,9 @@ func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
 		s.debug("invalid request, no team name specified")
 		return
 	}
-	s.kbc.SendMessageByTlfName("candrencil", "HI")
+	if err := s.kbc.SendMessageByTeamName(teamName, "HI", &s.opts.Channel); err != nil {
+		s.debug("failed to send message: %s", err.Error())
+	}
 }
 
 func (s *BotServer) Start() (err error) {
@@ -59,6 +62,7 @@ func mainInner() int {
 	var opts Options
 
 	flag.StringVar(&opts.KeybaseLocation, "keybase", "keybase", "keybase command")
+	flag.StringVar(&opts.Channel, "channel", "github", "channel to send messages")
 	flag.IntVar(&opts.ListenPort, "port", 80, "listen port")
 	flag.Parse()
 
