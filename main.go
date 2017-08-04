@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -35,13 +36,55 @@ func (s *BotServer) debug(msg string, args ...interface{}) {
 	fmt.Printf("BotServer: "+msg+"\n", args...)
 }
 
+type pusher struct {
+	Name  string
+	Email string
+}
+
+type pushReq struct {
+	Pusher pusher
+}
+
+func (s *BotServer) handlePushReq(body string) (string, error) {
+	s.debug("handling push req")
+	var pr pushReq
+	if err := json.Unmarshal([]byte(body), &pr); err != nil {
+		return "", err
+	}
+	return pr.Pusher.Name, nil
+}
+
 func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
 	teamName := r.URL.Query().Get("team")
 	if teamName == "" {
 		s.debug("invalid request, no team name specified")
 		return
 	}
-	if err := s.kbc.SendMessageByTeamName(teamName, "HI", &s.opts.Channel); err != nil {
+
+	var msg string
+	var err error
+	typ := r.Header.Get("X-GitHub-Event")
+	body := r.FormValue("payload")
+	switch typ {
+	case "push":
+		msg, err = s.handlePushReq(body)
+	default:
+		err = fmt.Errorf("unknown event type: %s", typ)
+	}
+	if err != nil {
+		s.debug("error handling hook event: %s", err.Error())
+		return
+	}
+
+	/*decoder := json.NewDecoder(r.Body)
+	var t pushReq
+	err := decoder.Decode(&t)
+	if err != nil {
+		s.debug("unable to parse
+	}
+	defer req.Body.Close()
+	log.Println(t.Test)*/
+	if err := s.kbc.SendMessageByTeamName(teamName, msg, &s.opts.Channel); err != nil {
 		s.debug("failed to send message: %s", err.Error())
 	}
 }
