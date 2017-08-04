@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
 )
@@ -62,11 +63,13 @@ func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	if err = json.Unmarshal([]byte(body), &pr); err != nil {
 		return "", err
 	}
-	res = fmt.Sprintf("*github*\\n[%s] _%s_ pushed %d commits", pr.Repository.FullName, pr.Pusher.Name,
-		len(pr.Commits))
+	res = fmt.Sprintf("*github*\\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
+		pr.Pusher.Name, len(pr.Commits), strings.TrimPrefix(pr.Ref, "refs/heads/"))
 	for _, commit := range pr.Commits {
-		res += fmt.Sprintf("\\n>`%s` - %s", commit.ID, commit.Message)
+		msg := strings.Replace(commit.Message, "\n", "\\n", -1)
+		res += fmt.Sprintf("\\n>`%s` - %s", commit.ID, msg)
 	}
+	s.debug("msg: %s", res)
 	return res, nil
 }
 
