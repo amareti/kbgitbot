@@ -41,17 +41,33 @@ type pusher struct {
 	Email string
 }
 
-type pushReq struct {
-	Pusher pusher
+type repo struct {
+	FullName string `json:"full_name"`
 }
 
-func (s *BotServer) handlePushReq(body string) (string, error) {
-	s.debug("handling push req")
+type commit struct {
+	ID      string `json:"id"`
+	Message string
+}
+
+type pushReq struct {
+	Ref        string
+	Pusher     pusher
+	Repository repo
+	Commits    []commit
+}
+
+func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	var pr pushReq
-	if err := json.Unmarshal([]byte(body), &pr); err != nil {
+	if err = json.Unmarshal([]byte(body), &pr); err != nil {
 		return "", err
 	}
-	return pr.Pusher.Name, nil
+	res = fmt.Sprintf("[%s] %s pushed %d commits", pr.Repository.FullName, pr.Pusher.Name,
+		len(pr.Commits))
+	for _, commit := range pr.Commits {
+		res += fmt.Sprintf("\\n>%s - %s", commit.ID, commit.Message)
+	}
+	return res, nil
 }
 
 func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
