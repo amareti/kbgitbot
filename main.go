@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -75,6 +76,41 @@ func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	return res, nil
 }
 
+type issueUser struct {
+	Login string
+}
+
+type issue struct {
+	URL    string `json:"html_url"`
+	Title  string
+	Body   string
+	User   issueUser
+	Number int
+}
+
+type issueReq struct {
+	Action     string
+	Issue      issue
+	Repository repo
+}
+
+func (s *BotServer) handleIssueReq(body string) (res string, err error) {
+	var ir issueReq
+	if err = json.Unmarshal([]byte(body), &ir); err != nil {
+		return "", err
+	}
+	if ir.Action != "opened" {
+		return "", errors.New("not an open issue event")
+	}
+	res = fmt.Sprintf(`*github*
+[%s] Issue created by _%s_
+>*[#%d] %s*
+>%s
+>%s`, ir.Repository.FullName, ir.Issue.User.Login, ir.Issue.Number, ir.Issue.Title, ir.Issue.URL,
+		strings.Replace(ir.Issue.Body, "\n", "\n>", -1))
+	return res, nil
+}
+
 func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
 	teamName := r.URL.Query().Get("team")
 	if teamName == "" {
@@ -89,6 +125,8 @@ func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
 	switch typ {
 	case "push":
 		msg, err = s.handlePushReq(body)
+	case "issues":
+		msg, err = s.handleIssueReq(body)
 	default:
 		err = fmt.Errorf("unknown event type: %s", typ)
 	}
