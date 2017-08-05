@@ -37,7 +37,7 @@ func (s *BotServer) debug(msg string, args ...interface{}) {
 	fmt.Printf("BotServer: "+msg+"\n", args...)
 }
 
-type pusher struct {
+type user struct {
 	Name  string
 	Email string
 }
@@ -47,13 +47,15 @@ type repo struct {
 }
 
 type commit struct {
-	ID      string `json:"id"`
-	Message string
+	ID        string `json:"id"`
+	Message   string
+	Author    user
+	Committer user
 }
 
 type pushReq struct {
 	Ref        string
-	Pusher     pusher
+	Pusher     user
 	Repository repo
 	Commits    []commit
 }
@@ -63,11 +65,11 @@ func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	if err = json.Unmarshal([]byte(body), &pr); err != nil {
 		return "", err
 	}
-	res = fmt.Sprintf("*github*\\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
+	res = fmt.Sprintf("*github*\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
 		pr.Pusher.Name, len(pr.Commits), strings.TrimPrefix(pr.Ref, "refs/heads/"))
 	for _, commit := range pr.Commits {
-		msg := strings.Replace(commit.Message, "\n", "\\n", -1)
-		res += fmt.Sprintf("\\n>`%s` - %s", commit.ID, msg)
+		toks := strings.Split(commit.Message, "\n")
+		res += fmt.Sprintf("\n>`%s` %s - %s", commit.ID[0:8], toks[0], commit.Author.Name)
 	}
 	s.debug("msg: %s", res)
 	return res, nil
@@ -95,14 +97,6 @@ func (s *BotServer) handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*decoder := json.NewDecoder(r.Body)
-	var t pushReq
-	err := decoder.Decode(&t)
-	if err != nil {
-		s.debug("unable to parse
-	}
-	defer req.Body.Close()
-	log.Println(t.Test)*/
 	if err := s.kbc.SendMessageByTeamName(teamName, msg, &s.opts.Channel); err != nil {
 		s.debug("failed to send message: %s", err.Error())
 	}
