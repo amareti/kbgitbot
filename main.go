@@ -157,7 +157,7 @@ func mainInner() int {
 
 	flag.StringVar(&opts.KeybaseLocation, "keybase", "keybase", "keybase command")
 	flag.StringVar(&opts.Channel, "channel", "github", "channel to send messages")
-	flag.IntVar(&opts.ListenPort, "port", 80, "listen port")
+	flag.IntVar(&opts.ListenPort, "port", 8080, "listen port")
 	flag.Parse()
 
 	bs := NewBotServer(opts)
