@@ -56,6 +56,7 @@ type commit struct {
 
 type pushReq struct {
 	Ref        string
+	Deleted    bool
 	Pusher     user
 	Repository repo
 	Commits    []commit
@@ -66,11 +67,17 @@ func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	if err = json.Unmarshal([]byte(body), &pr); err != nil {
 		return "", err
 	}
-	res = fmt.Sprintf("*github*\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
-		pr.Pusher.Name, len(pr.Commits), strings.TrimPrefix(pr.Ref, "refs/heads/"))
-	for _, commit := range pr.Commits {
-		toks := strings.Split(commit.Message, "\n")
-		res += fmt.Sprintf("\n>`%s` %s - %s", commit.ID[0:8], toks[0], commit.Author.Name)
+	branch := strings.TrimPrefix(pr.Ref, "refs/heads/")
+	if len(pr.Commits) == 0 {
+		res = fmt.Sprintf("*github*\n[%s] _%s_ deleted branch %s", pr.Repository.FullName,
+			pr.Pusher.Name, branch)
+	} else {
+		res = fmt.Sprintf("*github*\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
+			pr.Pusher.Name, len(pr.Commits), branch)
+		for _, commit := range pr.Commits {
+			toks := strings.Split(commit.Message, "\n")
+			res += fmt.Sprintf("\n>`%s` %s - %s", commit.ID[0:8], toks[0], commit.Author.Name)
+		}
 	}
 	s.debug("msg: %s", res)
 	return res, nil
