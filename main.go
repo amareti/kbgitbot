@@ -69,10 +69,10 @@ func (s *BotServer) handlePushReq(body string) (res string, err error) {
 	}
 	branch := strings.TrimPrefix(pr.Ref, "refs/heads/")
 	if len(pr.Commits) == 0 {
-		res = fmt.Sprintf("*github*\n[%s] _%s_ deleted branch %s", pr.Repository.FullName,
+		res = fmt.Sprintf("*github*\n[%s] _%s_ deleted branch `%s`", pr.Repository.FullName,
 			pr.Pusher.Name, branch)
 	} else {
-		res = fmt.Sprintf("*github*\n[%s] _%s_ pushed %d commits to %s", pr.Repository.FullName,
+		res = fmt.Sprintf("*github*\n[%s] _%s_ pushed %d commits to `%s`", pr.Repository.FullName,
 			pr.Pusher.Name, len(pr.Commits), branch)
 		for _, commit := range pr.Commits {
 			toks := strings.Split(commit.Message, "\n")

@@ -18,8 +18,8 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 RUN mkdir -p $GOPATH/src/github.com/mmaxim
-RUN go get github.com/mmaxim/kbgitbot
 
+COPY kbgitbot /go/bin
 COPY runbot.sh /
 
 USER keybase
