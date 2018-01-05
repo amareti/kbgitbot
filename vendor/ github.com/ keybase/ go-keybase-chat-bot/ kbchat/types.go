@@ -2,7 +2,7 @@ package kbchat
 
 type Sender struct {
 	Uid        string `json:"uid"`
-	Username   string `json:"username"`
+	Usernamefamar   string `json:"username"`
 	DeviceID   string `json:"device_id"`
 	DeviceName string `json:device_name"`
 }
